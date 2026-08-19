@@ -80,4 +80,24 @@ npm run build
 
 ---
 
+## 🌐 Publicação no GitHub Pages
+
+O projeto já está configurado com `base: './'` no `vite.config.ts` e inclui um fluxo automatizado do **GitHub Actions**.
+
+### Opção 1: Automático (GitHub Actions) — Recomendado
+1. Suba o código para o seu repositório no GitHub (`git push origin main`).
+2. No seu repositório no GitHub, vá em **Settings** > **Pages**.
+3. Em **Build and deployment** > **Source**, selecione **GitHub Actions**.
+4. Pronto! A cada novo `push` para a branch `main` ou `master`, o build e o deploy serão realizados automaticamente.
+
+### Opção 2: Manual via `gh-pages`
+```bash
+# 1. Gerar os arquivos estáticos na pasta dist
+npm run build
+
+# 2. O conteúdo compilado estará pronto em ./dist para publicação
+```
+
+---
+
 *Desenvolvido com dedicação à arte e educação musical.* 𝄞
