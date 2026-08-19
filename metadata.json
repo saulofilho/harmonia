@@ -1,0 +1,6 @@
+{
+  "name": "Harmonia - Aprenda Música e Partitura",
+  "description": "Aplicativo gamificado e interativo para aprender música, leitura de partituras (claves de Sol e Fá), oitavas, percepção auditiva e reconhecimento de notas e canto em tempo real via microfone.",
+  "requestFramePermissions": ["microphone"],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
