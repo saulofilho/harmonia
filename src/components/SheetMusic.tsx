@@ -1,6 +1,7 @@
 /**
  * Authentic Conservatory Music Manuscript (Partitura Clássica)
- * Features parchment aesthetics, engraving details, Italian tempo markings, and vector engraving
+ * Features parchment aesthetics, engraving details, Italian tempo markings, vector engraving,
+ * and radiant golden pulse/glow animations for engaging music exercise gameplay.
  */
 
 import React from 'react';
@@ -23,6 +24,7 @@ interface SheetMusicProps {
   subtitle?: string;
   tempoMarking?: string;
   timeSignature?: string;
+  pulseAnimation?: boolean;
 }
 
 const DIATONIC_BASE: Record<string, number> = {
@@ -54,84 +56,84 @@ export const SheetMusic: React.FC<SheetMusicProps> = ({
   className = '',
   subtitle,
   tempoMarking = 'Moderato cantabile',
-  timeSignature = '4/4'
+  timeSignature = '4/4',
+  pulseAnimation = true
 }) => {
   const lineSpacing = 14;
   const staffTopY = 62;
-  const staffBottomY = staffTopY + 4 * lineSpacing;
+  const staffBottomY = staffTopY + 4 * lineSpacing; // 118
 
-  const getNoteY = (noteName: NoteName, octave: number, targetClef: 'treble' | 'bass'): number => {
-    const base = getBaseDiatonic(noteName);
-    const step = octave * 7 + DIATONIC_BASE[base];
+  // Calculate vertical coordinate (Y) on the staff
+  const getNoteY = (note: NoteName, octave: number, targetClef: 'treble' | 'bass'): number => {
+    const baseNote = getBaseDiatonic(note);
+    const diatonicStep = DIATONIC_BASE[baseNote] ?? 0;
+    const totalStep = octave * 7 + diatonicStep;
 
-    let refStep: number;
     if (targetClef === 'treble') {
-      refStep = 4 * 7 + 2; // E4 (Line 1)
+      const e4Step = 4 * 7 + DIATONIC_BASE['E']; // 30
+      const diff = totalStep - e4Step;
+      return staffBottomY - diff * (lineSpacing / 2);
     } else {
-      refStep = 2 * 7 + 4; // G2 (Line 1)
+      const g2Step = 2 * 7 + DIATONIC_BASE['G']; // 18
+      const diff = totalStep - g2Step;
+      return staffBottomY - diff * (lineSpacing / 2);
     }
-
-    const stepDiff = step - refStep;
-    return staffBottomY - stepDiff * (lineSpacing / 2);
   };
 
+  // Generate ledger lines
   const getLedgerLines = (noteY: number): number[] => {
-    const ledgers: number[] = [];
-    if (noteY >= staffBottomY + lineSpacing) {
-      for (let y = staffBottomY + lineSpacing; y <= noteY + 1; y += lineSpacing) {
-        ledgers.push(y);
+    const lines: number[] = [];
+    if (noteY > staffBottomY + 2) {
+      for (let y = staffBottomY + lineSpacing; y <= noteY + 2; y += lineSpacing) {
+        lines.push(y);
+      }
+    } else if (noteY < staffTopY - 2) {
+      for (let y = staffTopY - lineSpacing; y >= noteY - 2; y -= lineSpacing) {
+        lines.push(y);
       }
     }
-    if (noteY <= staffTopY - lineSpacing) {
-      for (let y = staffTopY - lineSpacing; y >= noteY - 1; y -= lineSpacing) {
-        ledgers.push(y);
-      }
-    }
-    return ledgers;
+    return lines;
   };
 
   const handleSvgClick = (e: React.MouseEvent<SVGSVGElement>) => {
     if (!interactive || !onStaffClick) return;
-    const rect = e.currentTarget.getBoundingClientRect();
-    const clickY = e.clientY - rect.top;
+    const svgRect = e.currentTarget.getBoundingClientRect();
+    const clickY = ((e.clientY - svgRect.top) / svgRect.height) * height;
 
-    const targetClef = clef === 'bass' ? 'bass' : 'treble';
-    const refStep = targetClef === 'treble' ? 4 * 7 + 2 : 2 * 7 + 4;
+    const stepSize = lineSpacing / 2;
+    const rawDiff = Math.round((staffBottomY - clickY) / stepSize);
 
-    const rawDiff = (staffBottomY - clickY) / (lineSpacing / 2);
-    const stepDiff = Math.round(rawDiff);
-    const targetStep = refStep + stepDiff;
+    const baseOffset = clef === 'bass' ? 2 * 7 + DIATONIC_BASE['G'] : 4 * 7 + DIATONIC_BASE['E'];
+    const totalStep = baseOffset + rawDiff;
 
-    const targetOctave = Math.floor(targetStep / 7);
-    const targetDiatonicIdx = ((targetStep % 7) + 7) % 7;
-    const diatonicKeys = ['C', 'D', 'E', 'F', 'G', 'A', 'B'] as NoteName[];
-    const targetNoteName = diatonicKeys[targetDiatonicIdx];
+    const diatonicNames: NoteName[] = ['C', 'D', 'E', 'F', 'G', 'A', 'B'];
+    const diatonicIdx = ((totalStep % 7) + 7) % 7;
+    const calculatedOctave = Math.floor(totalStep / 7);
 
-    onStaffClick({
-      note: targetNoteName,
-      octave: targetOctave,
-      duration: 'quarter'
-    });
+    if (calculatedOctave >= 2 && calculatedOctave <= 6) {
+      onStaffClick({
+        note: diatonicNames[diatonicIdx],
+        octave: calculatedOctave,
+        duration: 'quarter'
+      });
+    }
   };
 
-  const renderLabel = (note: SheetNote) => {
-    const solfege = NOTE_SOLFEGE_MAP[note.note] || note.note;
-    const letter = `${note.note}${note.octave}`;
-    if (notation === 'solfege') return `${solfege}`;
-    if (notation === 'letters') return letter;
-    return `${solfege} (${letter})`;
+  const renderLabel = (sheetNote: SheetNote): string => {
+    const solfege = NOTE_SOLFEGE_MAP[sheetNote.note];
+    if (notation === 'solfege') return `${solfege}${sheetNote.octave}`;
+    if (notation === 'letters') return `${sheetNote.note}${sheetNote.octave}`;
+    return `${solfege} (${sheetNote.note}${sheetNote.octave})`;
   };
 
-  const startX = 120;
-  const availableWidth = width - startX - 35;
-  const noteSpacing = notes.length > 1 ? Math.min(65, availableWidth / notes.length) : 80;
-
+  const noteSpacing = notes.length > 1 ? Math.min(65, (width - 150) / notes.length) : 0;
+  const startX = 130;
   const [timeTop, timeBottom] = timeSignature.split('/');
 
   return (
     <div className={`relative flex flex-col items-center select-none ${className}`}>
-      {/* Wooden / Brass Framed Parchment */}
-      <div className="relative w-full max-w-full rounded-2xl overflow-hidden shadow-xl border-2 border-[#d4af37]/30 bg-[#2a241e] p-1">
+      {/* Outer Classical Wooden/Gilt Frame */}
+      <div className="p-1 rounded-2xl bg-gradient-to-b from-[#8c6d1f] via-[#d4af37] to-[#59420e] shadow-2xl w-full max-w-2xl">
         <div className="rounded-xl overflow-hidden bg-[#fdfaf2] p-2 border border-[#e8deb8]">
           
           <svg
@@ -141,13 +143,32 @@ export const SheetMusic: React.FC<SheetMusicProps> = ({
             onClick={handleSvgClick}
             id="sheet-music-svg"
           >
-            {/* Vintage Manuscript Parchment Texture Gradient */}
+            {/* Vintage Manuscript Parchment Texture Gradient & Radiant Filters */}
             <defs>
               <linearGradient id="parchmentGrad" x1="0" y1="0" x2="0" y2="1">
                 <stop offset="0%" stopColor="#faf6ec" />
                 <stop offset="50%" stopColor="#fdfbf5" />
                 <stop offset="100%" stopColor="#f5efe0" />
               </linearGradient>
+
+              {/* Radiant Warm Golden Glow Filter for Notes */}
+              <filter id="goldGlowFilter" x="-60%" y="-60%" width="220%" height="220%">
+                <feGaussianBlur stdDeviation="3.5" result="coloredBlur" />
+                <feMerge>
+                  <feMergeNode in="coloredBlur" />
+                  <feMergeNode in="coloredBlur" />
+                  <feMergeNode in="SourceGraphic" />
+                </feMerge>
+              </filter>
+
+              {/* Radial Golden Aura for pulsating background glow */}
+              <radialGradient id="goldAuraGradient" cx="50%" cy="50%" r="50%">
+                <stop offset="0%" stopColor="#ffd700" stopOpacity="0.85" />
+                <stop offset="45%" stopColor="#d4af37" stopOpacity="0.5" />
+                <stop offset="80%" stopColor="#b8860b" stopOpacity="0.2" />
+                <stop offset="100%" stopColor="#d4af37" stopOpacity="0" />
+              </radialGradient>
+
               <filter id="subtleNoise" x="0%" y="0%" width="100%" height="100%">
                 <feTurbulence type="fractalNoise" baseFrequency="0.04" numOctaves="3" result="noise" />
                 <feColorMatrix type="matrix" values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 0.04 0" />
@@ -164,7 +185,7 @@ export const SheetMusic: React.FC<SheetMusicProps> = ({
               fill="url(#parchmentGrad)"
             />
 
-            {/* Classical Italian Tempo Header (e.g. ♩ = 100 Andante cantabile) */}
+            {/* Classical Italian Tempo Header */}
             <g transform="translate(24, 26)">
               <text
                 x="0"
@@ -189,7 +210,7 @@ export const SheetMusic: React.FC<SheetMusicProps> = ({
               </text>
             </g>
 
-            {/* Dynamic Italian Expression Mark (e.g. p / mf / f) */}
+            {/* Dynamic Italian Expression Mark */}
             <text
               x="24"
               y={staffBottomY + 28}
@@ -258,15 +279,21 @@ export const SheetMusic: React.FC<SheetMusicProps> = ({
               <text y="38">{timeBottom || '4'}</text>
             </g>
 
-            {/* Render Notes */}
+            {/* Render Notes with Golden Pulse & Glow */}
             {notes.map((sheetNote, index) => {
               const targetClef = clef === 'bass' ? 'bass' : 'treble';
               const noteY = getNoteY(sheetNote.note, sheetNote.octave, targetClef);
               const noteX = notes.length === 1 ? width / 2 + 20 : startX + index * noteSpacing;
               const ledgers = getLedgerLines(noteY);
-              const isHighlighted = index === activeNoteIndex || sheetNote.highlighted;
               
-              // If colors enabled, use authentic conservatory gemstone palette
+              // Animate if single note challenge, explicitly highlighted, or active playback index
+              const shouldPulse = pulseAnimation && (
+                notes.length === 1 ||
+                index === activeNoteIndex ||
+                sheetNote.highlighted
+              );
+              
+              // Gemstone color or classical carbon ink
               const baseColor = showColors 
                 ? NOTE_COLORS[sheetNote.note] || '#b45309' 
                 : '#1c1917';
@@ -278,7 +305,7 @@ export const SheetMusic: React.FC<SheetMusicProps> = ({
               return (
                 <g
                   key={`note-${index}-${sheetNote.note}-${sheetNote.octave}`}
-                  className="transition-transform duration-200 cursor-pointer"
+                  className={`transition-all duration-300 cursor-pointer ${shouldPulse ? 'gold-glow-note' : ''}`}
                   onClick={(e) => {
                     e.stopPropagation();
                     if (onNoteClick) onNoteClick(sheetNote);
@@ -297,20 +324,55 @@ export const SheetMusic: React.FC<SheetMusicProps> = ({
                     />
                   ))}
 
-                  {/* Golden Glow Aura for active note */}
-                  {isHighlighted && (
-                    <ellipse
-                      cx={noteX}
-                      cy={noteY}
-                      rx="18"
-                      ry="15"
-                      fill="#d4af37"
-                      opacity="0.35"
-                      className="animate-pulse"
-                    />
+                  {/* RADIANT GOLDEN PULSE & GLOW SYSTEM */}
+                  {shouldPulse && (
+                    <g className="pointer-events-none">
+                      {/* Outermost Expanding Halo Wave */}
+                      <ellipse
+                        cx={noteX}
+                        cy={noteY}
+                        rx="24"
+                        ry="20"
+                        fill="none"
+                        stroke="#f5d77f"
+                        strokeWidth="2.5"
+                        className="gold-halo-ring"
+                      />
+
+                      {/* Secondary Interleaved Expanding Halo Wave */}
+                      <ellipse
+                        cx={noteX}
+                        cy={noteY}
+                        rx="16"
+                        ry="14"
+                        fill="none"
+                        stroke="#d4af37"
+                        strokeWidth="1.8"
+                        className="gold-halo-ring-secondary"
+                      />
+
+                      {/* Concentric Golden Core Aura Glow */}
+                      <ellipse
+                        cx={noteX}
+                        cy={noteY}
+                        rx="20"
+                        ry="16"
+                        fill="url(#goldAuraGradient)"
+                        opacity="0.75"
+                        className="animate-pulse"
+                      />
+
+                      {/* Golden Stardust Sparkle Accents */}
+                      <g transform={`translate(${noteX + 13}, ${noteY - 12})`} className="gold-sparkle-particle">
+                        <path d="M0,-4 L1,-1 L4,0 L1,1 L0,4 L-1,1 L-4,0 L-1,-1 Z" fill="#d4af37" />
+                      </g>
+                      <g transform={`translate(${noteX - 14}, ${noteY + 10})`} className="gold-sparkle-particle" style={{ animationDelay: '0.9s' }}>
+                        <path d="M0,-3 L0.8,-0.8 L3,0 L0.8,0.8 L0,3 L-0.8,0.8 L-3,0 L-0.8,-0.8 Z" fill="#f5d77f" />
+                      </g>
+                    </g>
                   )}
 
-                  {/* Accidental (# or b) with musical typography */}
+                  {/* Accidental (# or b) with musical typography and glow */}
                   {sheetNote.note.includes('#') && (
                     <text
                       x={noteX - 18}
@@ -320,37 +382,40 @@ export const SheetMusic: React.FC<SheetMusicProps> = ({
                       fill={baseColor}
                       textAnchor="middle"
                       fontFamily="'Playfair Display', serif"
+                      filter={shouldPulse ? "url(#goldGlowFilter)" : undefined}
                     >
                       ♯
                     </text>
                   )}
 
-                  {/* Authentic Note Head (Classical Engraving Tilt) */}
+                  {/* Authentic Note Head with Glowing Stroke & Fill */}
                   <ellipse
                     cx={noteX}
                     cy={noteY}
-                    rx="8.2"
-                    ry="6.0"
+                    rx="8.4"
+                    ry="6.2"
                     transform={`rotate(-24 ${noteX} ${noteY})`}
                     fill={sheetNote.duration === 'whole' || sheetNote.duration === 'half' ? '#fdfaf2' : baseColor}
-                    stroke={baseColor}
-                    strokeWidth={sheetNote.duration === 'whole' || sheetNote.duration === 'half' ? "2.5" : "1"}
+                    stroke={shouldPulse ? '#f5d77f' : baseColor}
+                    strokeWidth={shouldPulse ? "2.4" : sheetNote.duration === 'whole' || sheetNote.duration === 'half' ? "2.5" : "1"}
+                    filter={shouldPulse ? "url(#goldGlowFilter)" : undefined}
                   />
 
-                  {/* Note Stem */}
+                  {/* Note Stem with Golden Radiant Sheen */}
                   {sheetNote.duration !== 'whole' && (
                     <line
                       x1={stemX}
                       y1={noteY}
                       x2={stemX}
                       y2={stemY2}
-                      stroke={baseColor}
-                      strokeWidth="2.2"
+                      stroke={shouldPulse ? '#d4af37' : baseColor}
+                      strokeWidth={shouldPulse ? "2.6" : "2.2"}
                       strokeLinecap="round"
+                      filter={shouldPulse ? "url(#goldGlowFilter)" : undefined}
                     />
                   )}
 
-                  {/* Classical Note Name Badge */}
+                  {/* Classical Note Name Badge with Golden Pulse Badge Class */}
                   {showLabels && (
                     <g transform={`translate(${noteX}, ${staffBottomY + 36})`}>
                       <rect
@@ -359,17 +424,17 @@ export const SheetMusic: React.FC<SheetMusicProps> = ({
                         width="52"
                         height="19"
                         rx="6"
-                        fill={isHighlighted ? '#d4af37' : '#f5eedc'}
-                        stroke={isHighlighted ? '#996515' : '#c8b896'}
-                        strokeWidth="1.2"
-                        className="shadow-2xs"
+                        fill={shouldPulse ? '#2a2418' : '#f5eedc'}
+                        stroke={shouldPulse ? '#d4af37' : '#c8b896'}
+                        strokeWidth={shouldPulse ? "1.8" : "1.2"}
+                        className={shouldPulse ? "gold-pulse-badge" : "shadow-2xs"}
                       />
                       <text
                         y="1"
                         fontSize="11"
                         fontWeight="800"
                         textAnchor="middle"
-                        fill={isHighlighted ? '#1c1917' : '#3d3020'}
+                        fill={shouldPulse ? '#f5d77f' : '#3d3020'}
                         fontFamily="'Plus Jakarta Sans', sans-serif"
                       >
                         {renderLabel(sheetNote)}

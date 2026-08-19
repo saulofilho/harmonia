@@ -208,7 +208,7 @@ export const PianoKeyboard: React.FC<PianoKeyboardProps> = ({
                       onTouchEnd={(e) => { e.preventDefault(); handleKeyUp(note, oct); }}
                       className={`relative w-11 sm:w-12 h-36 sm:h-44 rounded-b-md border-x border-b flex flex-col justify-end pb-3 items-center transition-all duration-75 cursor-pointer ${
                         active
-                          ? 'bg-[#fef3c7] shadow-inner border-amber-500 scale-[0.99] translate-y-0.5'
+                          ? 'bg-[#fef3c7] shadow-[0_0_20px_rgba(212,175,55,0.7)] border-amber-400 scale-[0.99] translate-y-0.5 z-2'
                           : 'bg-gradient-to-b from-[#fffff8] via-[#fbf9f2] to-[#f4eee1] hover:from-[#fdfbf7] hover:to-[#ede5d5] border-[#d1c7b7] shadow-xs'
                       }`}
                       style={{
@@ -216,21 +216,26 @@ export const PianoKeyboard: React.FC<PianoKeyboardProps> = ({
                         borderBottomWidth: active ? '5px' : '3px'
                       }}
                     >
+                      {/* Active Golden Aura Glow Pill */}
+                      {active && (
+                        <span className="absolute inset-x-1 top-1 bottom-8 bg-gradient-to-b from-amber-300/40 to-transparent rounded-t-sm pointer-events-none animate-pulse" />
+                      )}
+
                       {/* Gemstone Note Color indicator */}
                       {showColors && (
                         <span
-                          className="w-2.5 h-2.5 rounded-full mb-1 shadow-2xs transition-transform ring-1 ring-black/20"
-                          style={{ backgroundColor: noteColor, transform: active ? 'scale(1.3)' : 'scale(1)' }}
+                          className={`w-2.5 h-2.5 rounded-full mb-1 shadow-2xs transition-transform ring-1 ring-black/20 ${active ? 'scale-125 ring-2 ring-amber-400 animate-pulse' : ''}`}
+                          style={{ backgroundColor: noteColor }}
                         />
                       )}
                       
                       {/* Note Label */}
                       {showLabels && (
                         <div className="text-center leading-tight">
-                          <span className="block text-xs font-black text-[#2e261e] font-sans">
+                          <span className={`block text-xs font-black font-sans ${active ? 'text-amber-900 font-extrabold' : 'text-[#2e261e]'}`}>
                             {getLabel(note, oct)}
                           </span>
-                          <span className="block text-[10px] font-bold text-[#8c7f70] font-mono">
+                          <span className={`block text-[10px] font-bold font-mono ${active ? 'text-amber-700 font-extrabold' : 'text-[#8c7f70]'}`}>
                             {note}{oct}
                           </span>
                         </div>
@@ -248,13 +253,13 @@ export const PianoKeyboard: React.FC<PianoKeyboardProps> = ({
                         onTouchEnd={(e) => { e.preventDefault(); handleKeyUp(blackNote, oct); }}
                         className={`absolute top-0 -right-4 sm:-right-4.5 w-7 sm:w-8 h-22 sm:h-28 rounded-b-md z-10 flex flex-col justify-end pb-2 items-center transition-all duration-75 cursor-pointer border-x border-b ${
                           isKeyActive(blackNote, oct)
-                            ? 'bg-gradient-to-b from-[#d97706] to-[#b45309] border-amber-300 shadow-inner scale-[0.98] translate-y-0.5'
+                            ? 'bg-gradient-to-b from-[#d97706] via-[#b45309] to-[#92400e] border-amber-300 shadow-[0_0_18px_rgba(245,215,127,0.85)] scale-[0.98] translate-y-0.5'
                             : 'bg-gradient-to-b from-[#24211e] via-[#171513] to-[#0c0a09] hover:from-[#2e2a26] hover:to-[#171513] border-[#0a0908] shadow-md'
                         }`}
                       >
                         {showColors && (
                           <span
-                            className="w-1.5 h-1.5 rounded-full mb-1 ring-1 ring-white/20"
+                            className={`w-1.5 h-1.5 rounded-full mb-1 ring-1 ring-white/20 ${isKeyActive(blackNote, oct) ? 'scale-125 ring-2 ring-amber-300 animate-pulse' : ''}`}
                             style={{ backgroundColor: NOTE_COLORS[blackNote] }}
                           />
                         )}

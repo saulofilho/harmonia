@@ -59,3 +59,92 @@
 .stave-line {
   stroke: #2c3038;
 }
+
+/* Radiant Golden Pulse & Glow Animations for Musical Notes */
+@keyframes goldGlowPulse {
+  0%, 100% {
+    filter: drop-shadow(0 0 4px rgba(212, 175, 55, 0.5)) drop-shadow(0 0 10px rgba(254, 240, 138, 0.3));
+    opacity: 0.95;
+    transform: scale(1);
+  }
+  50% {
+    filter: drop-shadow(0 0 12px rgba(212, 175, 55, 0.95)) drop-shadow(0 0 20px rgba(245, 215, 127, 0.75)) drop-shadow(0 0 32px rgba(217, 119, 6, 0.45));
+    opacity: 1;
+    transform: scale(1.04);
+  }
+}
+
+@keyframes haloExpand {
+  0% {
+    r: 12;
+    rx: 14;
+    ry: 12;
+    opacity: 0.85;
+    stroke-width: 2.5;
+  }
+  50% {
+    opacity: 0.45;
+    stroke-width: 1.5;
+  }
+  100% {
+    r: 28;
+    rx: 32;
+    ry: 26;
+    opacity: 0;
+    stroke-width: 0.5;
+  }
+}
+
+@keyframes haloExpandSecondary {
+  0% {
+    r: 8;
+    rx: 10;
+    ry: 8;
+    opacity: 0.9;
+    stroke-width: 2;
+  }
+  100% {
+    r: 22;
+    rx: 24;
+    ry: 20;
+    opacity: 0;
+    stroke-width: 0.5;
+  }
+}
+
+@keyframes goldSparkle {
+  0%, 100% {
+    opacity: 0.2;
+    transform: scale(0.6) rotate(0deg);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.25) rotate(45deg);
+  }
+}
+
+.gold-glow-note {
+  animation: goldGlowPulse 2.2s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+  transform-origin: center;
+}
+
+.gold-halo-ring {
+  animation: haloExpand 2s cubic-bezier(0.2, 0.8, 0.2, 1) infinite;
+  transform-origin: center;
+}
+
+.gold-halo-ring-secondary {
+  animation: haloExpandSecondary 2s cubic-bezier(0.2, 0.8, 0.2, 1) infinite 0.75s;
+  transform-origin: center;
+}
+
+.gold-sparkle-particle {
+  animation: goldSparkle 1.8s ease-in-out infinite;
+  transform-origin: center;
+}
+
+.gold-pulse-badge {
+  box-shadow: 0 0 15px rgba(212, 175, 55, 0.45), inset 0 0 10px rgba(254, 240, 138, 0.3);
+  animation: goldGlowPulse 2s infinite ease-in-out;
+}
+
