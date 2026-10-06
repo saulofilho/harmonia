@@ -1,0 +1,18 @@
+{
+  "name": "Harmonia - Conservatório Musical",
+  "short_name": "Harmonia",
+  "description": "Conservatório interativo e gamificado para aprender música, leitura de partituras e percepção auditiva.",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#12141a",
+  "theme_color": "#d4af37",
+  "icons": [
+    {
+      "src": "./favicon.svg",
+      "sizes": "192x192 512x512 any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

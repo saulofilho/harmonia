@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="./public/favicon.svg" alt="Harmonia Conservatório Ícone" width="96" height="96" />
+</p>
+
 # 𝄞 Conservatório Musical — Teoria, Partituras & Percepção Auditiva
 
 > Uma plataforma interativa e gamificada para aprender música do zero: leitura de partituras, oitavas, harmonia, treino auditivo e reconhecimento de notas em tempo real via microfone.
