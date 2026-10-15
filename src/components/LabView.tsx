@@ -15,11 +15,13 @@ import {
   Layers, 
   Activity,
   Plus,
-  Compass
+  Compass,
+  Sparkles
 } from 'lucide-react';
 import { ClefType, NoteName, SheetNote, UserStats } from '../types';
 import { SheetMusic } from './SheetMusic';
 import { PianoKeyboard } from './PianoKeyboard';
+import { VirtualPianoLab } from './VirtualPianoLab';
 import { audioEngine, NOTE_NAMES, NOTE_SOLFEGE_MAP } from '../utils/audioEngine';
 
 interface LabViewProps {
@@ -73,7 +75,7 @@ const PRESET_SONGS: { name: string; composer: string; clef: ClefType; notes: She
 ];
 
 export const LabView: React.FC<LabViewProps> = ({ userStats }) => {
-  const [activeTab, setActiveTab] = useState<'composer' | 'scales' | 'metronome'>('composer');
+  const [activeTab, setActiveTab] = useState<'piano' | 'composer' | 'scales' | 'metronome'>('piano');
 
   // Composer state
   const [melodyNotes, setMelodyNotes] = useState<SheetNote[]>(PRESET_SONGS[0].notes);
@@ -217,8 +219,9 @@ export const LabView: React.FC<LabViewProps> = ({ userStats }) => {
         </p>
 
         {/* Tab Switcher */}
-        <div className="flex items-center justify-center gap-2 mt-6">
+        <div className="flex flex-wrap items-center justify-center gap-2 mt-6">
           {[
+            { id: 'piano', label: 'Piano Virtual & Afinação', icon: Sparkles },
             { id: 'composer', label: 'Compositor de Partitura', icon: Music },
             { id: 'scales', label: 'Dicionário de Escalas & Acordes', icon: Layers },
             { id: 'metronome', label: 'Metrônomo Maestro (BPM)', icon: Sliders }
@@ -245,6 +248,11 @@ export const LabView: React.FC<LabViewProps> = ({ userStats }) => {
 
       {/* Main Container */}
       <div className="conservatory-card rounded-3xl p-6 sm:p-8 border border-[#d4af37]/30 shadow-2xl">
+
+        {/* TAB 0: VIRTUAL PIANO & PITCH REFERENCE */}
+        {activeTab === 'piano' && (
+          <VirtualPianoLab userStats={userStats} />
+        )}
 
         {/* TAB 1: COMPOSER */}
         {activeTab === 'composer' && (
@@ -415,7 +423,18 @@ export const LabView: React.FC<LabViewProps> = ({ userStats }) => {
                 />
               </div>
 
-              <div className="flex justify-end">
+              <div className="mt-4 pt-3 border-t border-[#d4af37]/20">
+                <PianoKeyboard
+                  startOctave={3}
+                  octaveCount={2}
+                  highlightedNotes={currentScaleNotes}
+                  onKeyPress={(n) => audioEngine.playNote(n.note, n.octave)}
+                  showColors={userStats.settings.showNoteColors}
+                  notation={userStats.settings.notation}
+                />
+              </div>
+
+              <div className="flex justify-end mt-3">
                 <button
                   type="button"
                   onClick={() => audioEngine.playMelody(currentScaleNotes, 120)}
@@ -472,7 +491,18 @@ export const LabView: React.FC<LabViewProps> = ({ userStats }) => {
                 />
               </div>
 
-              <div className="flex justify-end gap-2.5">
+              <div className="mt-4 pt-3 border-t border-[#d4af37]/20">
+                <PianoKeyboard
+                  startOctave={3}
+                  octaveCount={2}
+                  highlightedNotes={currentChordNotes}
+                  onKeyPress={(n) => audioEngine.playNote(n.note, n.octave)}
+                  showColors={userStats.settings.showNoteColors}
+                  notation={userStats.settings.notation}
+                />
+              </div>
+
+              <div className="flex justify-end gap-2.5 mt-3">
                 <button
                   type="button"
                   onClick={() => audioEngine.playChord(currentChordNotes, 1.8, true)}

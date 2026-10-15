@@ -59,7 +59,7 @@ export interface Lesson {
   id: string;
   number: number;
   title: string;
-  category: 'fundamentos' | 'partitura' | 'oitavas' | 'intervalos' | 'ritmo' | 'acordes';
+  category: 'fundamentos' | 'partitura' | 'oitavas' | 'intervalos' | 'ritmo' | 'acordes' | 'escalas' | 'harmonia' | 'instrumentos' | 'timbre';
   description: string;
   iconName: string;
   xpReward: number;
@@ -88,7 +88,7 @@ export interface UserStats {
   settings: {
     soundVolume: number;
     notation: 'solfege' | 'letters' | 'both';
-    soundTimbre: 'piano' | 'marimba' | 'synth' | 'organ';
+    soundTimbre: 'piano' | 'marimba' | 'synth' | 'organ' | 'flute' | 'violin' | 'trumpet' | 'pure';
     showNoteColors: boolean;
   };
 }

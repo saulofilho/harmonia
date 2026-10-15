@@ -18,11 +18,14 @@ import {
   Sparkles,
   Lightbulb,
   Music,
-  FileText
+  FileText,
+  X
 } from 'lucide-react';
 import { Lesson, Question, SheetNote, UserStats } from '../types';
 import { SheetMusic } from './SheetMusic';
 import { PianoKeyboard } from './PianoKeyboard';
+import { VirtualPianoLab } from './VirtualPianoLab';
+import { TheoryEncyclopedia } from './TheoryEncyclopedia';
 import { audioEngine, NOTE_SOLFEGE_MAP } from '../utils/audioEngine';
 
 interface LessonViewProps {
@@ -38,6 +41,7 @@ export const LessonView: React.FC<LessonViewProps> = ({
   onCompleteLesson,
   onDeductHeart
 }) => {
+  const [conservatorySubTab, setConservatorySubTab] = useState<'roadmap' | 'encyclopedia'>('roadmap');
   const [selectedLesson, setSelectedLesson] = useState<Lesson | null>(null);
   const [currentStepIndex, setCurrentStepIndex] = useState<number>(0);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState<number>(0);
@@ -48,6 +52,7 @@ export const LessonView: React.FC<LessonViewProps> = ({
   const [isAnswerChecked, setIsAnswerChecked] = useState<boolean>(false);
   const [isAnswerCorrect, setIsAnswerCorrect] = useState<boolean>(false);
   const [correctAnswersCount, setCorrectAnswersCount] = useState<number>(0);
+  const [isPianoPitchModalOpen, setIsPianoPitchModalOpen] = useState<boolean>(false);
 
   const startLesson = (lesson: Lesson) => {
     setSelectedLesson(lesson);
@@ -152,22 +157,93 @@ export const LessonView: React.FC<LessonViewProps> = ({
   return (
     <div className="max-w-4xl mx-auto px-4 py-8">
       
-      {/* 1. CURRICULUM OVERVIEW MAP */}
+      {/* 1. CURRICULUM OVERVIEW MAP OR THEORY ENCYCLOPEDIA */}
       {lessonMode === 'overview' && (
-        <div>
-          {/* Header Banner with Conservatory Grandeur */}
-          <div className="text-center mb-10">
-            <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-[#241d15] border border-[#d4af37]/40 text-[#f5d77f] text-xs font-serif font-bold mb-3 shadow-md">
-              <span className="text-sm font-serif">𝄞</span>
-              Curriculum Musical Clássico & Teoria Prática
+        <div className="space-y-8">
+          {/* Sub-tab Navigation: Trilha de Aulas vs Enciclopédia & Instrumentos */}
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-4 p-2 bg-[#141721] rounded-2xl border border-[#d4af37]/25 shadow-lg">
+            <div className="flex items-center gap-1.5 w-full sm:w-auto">
+              <button
+                type="button"
+                onClick={() => setConservatorySubTab('roadmap')}
+                className={`flex-1 sm:flex-initial flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl font-serif text-xs font-bold transition-all cursor-pointer ${
+                  conservatorySubTab === 'roadmap'
+                    ? 'bg-gradient-to-r from-[#d4af37] to-[#b8860b] text-[#12141a] shadow-md shadow-[#d4af37]/20 font-black'
+                    : 'text-amber-100/70 hover:text-white hover:bg-[#202534]'
+                }`}
+              >
+                <BookOpen className="w-3.5 h-3.5" />
+                <span>Trilha de Aulas ({lessons.length} Módulos)</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setConservatorySubTab('encyclopedia')}
+                className={`flex-1 sm:flex-initial flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl font-serif text-xs font-bold transition-all cursor-pointer ${
+                  conservatorySubTab === 'encyclopedia'
+                    ? 'bg-gradient-to-r from-[#d4af37] to-[#b8860b] text-[#12141a] shadow-md shadow-[#d4af37]/20 font-black'
+                    : 'text-amber-100/70 hover:text-white hover:bg-[#202534]'
+                }`}
+              >
+                <Sparkles className="w-3.5 h-3.5" />
+                <span>Enciclopédia & Instrumentos</span>
+                <span className="px-1.5 py-0.5 rounded-full text-[9px] bg-amber-500/20 text-amber-300 border border-amber-400/30">
+                  Novo
+                </span>
+              </button>
             </div>
-            <h1 className="text-3xl sm:text-5xl font-black text-[#f5eedc] font-serif tracking-tight drop-shadow-md">
-              A Trilha do Músico
-            </h1>
-            <p className="mt-2.5 text-xs sm:text-sm text-amber-200/70 max-w-xl mx-auto font-serif italic">
-              Do som fundamental à leitura fluente de partituras e harmonia clássica.
-            </p>
+
+            <button
+              type="button"
+              onClick={() => setIsPianoPitchModalOpen(true)}
+              className="w-full sm:w-auto flex items-center justify-center gap-2 px-3.5 py-2 rounded-xl bg-[#202534] hover:bg-[#2a3042] text-amber-300 border border-[#d4af37]/30 text-xs font-serif font-bold transition-all cursor-pointer shadow-xs"
+            >
+              <span>🎹 Abrir Piano de Afinação</span>
+            </button>
           </div>
+
+          {conservatorySubTab === 'encyclopedia' ? (
+            <TheoryEncyclopedia
+              userStats={userStats}
+              onSelectPitchReference={(note) => {
+                setIsPianoPitchModalOpen(true);
+              }}
+            />
+          ) : (
+            <div>
+              {/* Header Banner with Conservatory Grandeur */}
+              <div className="text-center mb-8">
+                <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-[#241d15] border border-[#d4af37]/40 text-[#f5d77f] text-xs font-serif font-bold mb-3 shadow-md">
+                  <span className="text-sm font-serif">𝄞</span>
+                  Curriculum Musical Clássico, Teoria & Instrumentos
+                </div>
+                <h1 className="text-3xl sm:text-5xl font-black text-[#f5eedc] font-serif tracking-tight drop-shadow-md">
+                  A Trilha do Músico
+                </h1>
+                <p className="mt-2.5 text-xs sm:text-sm text-amber-200/70 max-w-xl mx-auto font-serif italic">
+                  Das 7 notas e semitons fundamentais à harmonia, escalas e grandes famílias de instrumentos.
+                </p>
+
+                {/* Quick Encyclopedia Highlight Box */}
+                <div className="mt-5 p-4 rounded-2xl bg-gradient-to-r from-[#1c1811] via-[#221c13] to-[#1c1811] border border-[#d4af37]/30 max-w-2xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-3 text-left">
+                  <div className="space-y-1">
+                    <span className="text-[10px] font-serif uppercase tracking-wider text-[#d4af37] font-bold block">
+                      Biblioteca Teórica Completa
+                    </span>
+                    <p className="text-xs text-amber-100/90 font-sans">
+                      Dúvidas sobre o que é <strong>tom</strong>, <strong>escala maior</strong>, <strong>harmonia</strong> ou <strong>tipos de instrumentos</strong>?
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setConservatorySubTab('encyclopedia')}
+                    className="px-3.5 py-1.5 rounded-xl bg-gradient-to-r from-[#d4af37] to-[#b8860b] text-[#12141a] text-xs font-serif font-bold cursor-pointer hover:brightness-110 shrink-0 shadow-sm flex items-center gap-1.5"
+                  >
+                    <span>Ver Enciclopédia</span>
+                    <ArrowRight className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+              </div>
 
           {/* Lesson Seals Path */}
           <div className="space-y-6 max-w-2xl mx-auto relative">
@@ -263,6 +339,8 @@ export const LessonView: React.FC<LessonViewProps> = ({
           </div>
         </div>
       )}
+    </div>
+  )}
 
       {/* 2. THEORY RUNNER */}
       {lessonMode === 'theory' && selectedLesson && theoryList.length > 0 && (
@@ -287,7 +365,14 @@ export const LessonView: React.FC<LessonViewProps> = ({
               </span>
             </div>
 
-            <div className="w-20" />
+            <button
+              type="button"
+              onClick={() => setIsPianoPitchModalOpen(true)}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#252a36] text-amber-300 border border-[#d4af37]/40 hover:bg-[#323849] hover:text-amber-100 text-xs font-serif font-bold transition-all cursor-pointer shadow-xs"
+              title="Abrir o Piano Virtual como referência de afinação durante a aula"
+            >
+              <span>🎹 Piano de Afinação</span>
+            </button>
           </div>
 
           {/* Theory Step Card */}
@@ -382,20 +467,31 @@ export const LessonView: React.FC<LessonViewProps> = ({
         <div className="conservatory-card rounded-3xl p-6 sm:p-8 border border-[#d4af37]/30 shadow-2xl animate-in fade-in duration-300">
           
           {/* Header & Hearts */}
-          <div className="flex items-center justify-between border-b border-[#d4af37]/20 pb-4 mb-6">
+          <div className="flex flex-wrap items-center justify-between border-b border-[#d4af37]/20 pb-4 mb-6 gap-2">
             <div className="flex items-center gap-2">
               <span className="font-serif text-xs font-bold text-[#d4af37] uppercase">
                 Exercício Prático {currentQuestionIndex + 1} de {questionList.length}
               </span>
             </div>
 
-            <div className="w-1/3 bg-[#1e222d] h-2 rounded-full overflow-hidden border border-[#d4af37]/20">
-              <div
-                className="bg-gradient-to-r from-[#d4af37] to-[#b8860b] h-full transition-all duration-300"
-                style={{
-                  width: `${((currentQuestionIndex + 1) / Math.max(1, questionList.length)) * 100}%`
-                }}
-              />
+            <div className="flex items-center gap-3">
+              <button
+                type="button"
+                onClick={() => setIsPianoPitchModalOpen(true)}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#252a36] text-amber-300 border border-[#d4af37]/40 hover:bg-[#323849] hover:text-amber-100 text-xs font-serif font-bold transition-all cursor-pointer shadow-xs"
+                title="Abrir o Piano Virtual como referência de afinação durante a aula"
+              >
+                <span>🎹 Referência de Afinação</span>
+              </button>
+
+              <div className="w-24 sm:w-32 bg-[#1e222d] h-2 rounded-full overflow-hidden border border-[#d4af37]/20">
+                <div
+                  className="bg-gradient-to-r from-[#d4af37] to-[#b8860b] h-full transition-all duration-300"
+                  style={{
+                    width: `${((currentQuestionIndex + 1) / Math.max(1, questionList.length)) * 100}%`
+                  }}
+                />
+              </div>
             </div>
           </div>
 
@@ -597,6 +693,52 @@ export const LessonView: React.FC<LessonViewProps> = ({
           >
             Retornar à Trilha do Conservatório
           </button>
+        </div>
+      )}
+
+      {/* Modal Overlay for Pitch Reference Virtual Piano */}
+      {isPianoPitchModalOpen && (
+        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-3 sm:p-6 overflow-y-auto animate-in fade-in duration-200">
+          <div className="conservatory-card rounded-3xl p-5 sm:p-7 border-2 border-[#d4af37] shadow-2xl max-w-5xl w-full max-h-[92vh] overflow-y-auto relative my-auto">
+            {/* Modal Header */}
+            <div className="flex items-center justify-between border-b border-[#d4af37]/30 pb-3 mb-5">
+              <div className="flex items-center gap-2">
+                <span className="text-xl">🎹</span>
+                <div>
+                  <h3 className="text-base sm:text-lg font-serif font-black text-[#f5eedc]">
+                    Referência de Afinação para as Aulas
+                  </h3>
+                  <p className="text-xs text-amber-200/70 font-serif italic">
+                    Ouça qualquer altura, confira as notas na pauta e calibre o seu ouvido antes de responder.
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsPianoPitchModalOpen(false)}
+                className="p-2 rounded-xl bg-[#252a36] text-amber-200 hover:text-white hover:bg-[#323849] border border-slate-700 transition-all cursor-pointer"
+                title="Fechar referência"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Virtual Piano Pitch Reference */}
+            <VirtualPianoLab
+              userStats={userStats}
+              isCompactModal={true}
+            />
+
+            <div className="mt-5 pt-3 border-t border-[#d4af37]/20 flex justify-end">
+              <button
+                type="button"
+                onClick={() => setIsPianoPitchModalOpen(false)}
+                className="px-6 py-2 rounded-xl bg-gradient-to-r from-[#d4af37] to-[#b8860b] text-[#12141a] font-serif font-bold text-xs shadow-md hover:brightness-110 cursor-pointer"
+              >
+                Concluir Consulta e Retornar ao Exercício
+              </button>
+            </div>
+          </div>
         </div>
       )}
 

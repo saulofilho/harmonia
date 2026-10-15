@@ -172,9 +172,13 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
               {[
                 { id: 'piano', label: 'Piano de Cauda' },
+                { id: 'violin', label: 'Violino (Cordas)' },
+                { id: 'flute', label: 'Flauta (Madeiras)' },
+                { id: 'trumpet', label: 'Trompete (Metais)' },
                 { id: 'marimba', label: 'Marimba Orquestral' },
                 { id: 'organ', label: 'Órgão de Tubos' },
-                { id: 'synth', label: 'Sintetizador Analógico' }
+                { id: 'synth', label: 'Sintetizador Analógico' },
+                { id: 'pure', label: 'Diapasão Puro (440Hz)' }
               ].map((t) => (
                 <button
                   key={t.id}

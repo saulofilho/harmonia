@@ -81,7 +81,10 @@ class AudioEngine {
   private masterGain: GainNode | null = null;
   private activeVoices: Map<number, { oscs: OscillatorNode[]; gain: GainNode }> = new Map();
   private volume: number = 0.7;
-  private timbre: 'piano' | 'marimba' | 'synth' | 'organ' = 'piano';
+  private timbre: 'piano' | 'marimba' | 'synth' | 'organ' | 'flute' | 'violin' | 'trumpet' | 'pure' = 'piano';
+  private droneOsc: OscillatorNode | null = null;
+  private droneGain: GainNode | null = null;
+  private currentDroneFreq: number | null = null;
 
   private initContext() {
     if (!this.ctx) {
@@ -103,8 +106,12 @@ class AudioEngine {
     }
   }
 
-  public setTimbre(timbre: 'piano' | 'marimba' | 'synth' | 'organ') {
+  public setTimbre(timbre: 'piano' | 'marimba' | 'synth' | 'organ' | 'flute' | 'violin' | 'trumpet' | 'pure') {
     this.timbre = timbre;
+  }
+
+  public getTimbre() {
+    return this.timbre;
   }
 
   /**
@@ -194,8 +201,134 @@ class AudioEngine {
       voiceGain.gain.setValueAtTime(0.6 * velocity, now + duration - 0.05);
       voiceGain.gain.exponentialRampToValueAtTime(0.0001, now + duration);
 
+    } else if (this.timbre === 'flute') {
+      // Madeiras: Flauta transversal (sopro aerofone com embocadura livre / bisel)
+      // Fundamental suave e pura (onda senoidal) + 2º harmônico sutil (oitava acima) + envelope com ataque gradual
+      const osc1 = this.ctx.createOscillator();
+      const osc2 = this.ctx.createOscillator();
+      const hGain2 = this.ctx.createGain();
+
+      osc1.type = 'sine';
+      osc2.type = 'sine';
+      osc1.frequency.setValueAtTime(freq, now);
+      osc2.frequency.setValueAtTime(freq * 2, now); // Oitava sutil do sopro
+      hGain2.gain.setValueAtTime(0.18, now);
+
+      // Sutil vibrato clássico de sopro (5.5 Hz)
+      const lfo = this.ctx.createOscillator();
+      const lfoGain = this.ctx.createGain();
+      lfo.frequency.setValueAtTime(5.5, now);
+      lfoGain.gain.setValueAtTime(2.5, now); // profundidade sutil
+      lfo.connect(osc1.frequency);
+      lfo.connect(osc2.frequency);
+      lfo.start(now + 0.1);
+      lfo.stop(now + duration);
+
+      osc1.connect(voiceGain);
+      osc2.connect(hGain2);
+      hGain2.connect(voiceGain);
+
+      osc1.start(now);
+      osc2.start(now);
+      osc1.stop(now + duration);
+      osc2.stop(now + duration);
+      oscs.push(osc1, osc2, lfo);
+
+      // Envelope aerofone (ataque suave de ar, sustentação expressiva e decaimento doce)
+      voiceGain.gain.setValueAtTime(0.001, now);
+      voiceGain.gain.linearRampToValueAtTime(0.75 * velocity, now + 0.06);
+      voiceGain.gain.setValueAtTime(0.65 * velocity, now + duration - 0.08);
+      voiceGain.gain.exponentialRampToValueAtTime(0.0001, now + duration);
+
+    } else if (this.timbre === 'violin') {
+      // Cordas Friccionadas: Violino com arco
+      // Onda dente de serra rica em harmônicos passando por filtro ressonante do tampo de abeto/madeira
+      const osc = this.ctx.createOscillator();
+      osc.type = 'sawtooth';
+      osc.frequency.setValueAtTime(freq, now);
+
+      // Filtro que modela a caixa acústica de ressonância do violino
+      const bodyFilter = this.ctx.createBiquadFilter();
+      bodyFilter.type = 'bandpass';
+      bodyFilter.frequency.setValueAtTime(Math.min(3000, freq * 2.8), now);
+      bodyFilter.Q.setValueAtTime(1.8, now);
+
+      // Vibrato expressivo de corda (6 Hz)
+      const lfo = this.ctx.createOscillator();
+      const lfoGain = this.ctx.createGain();
+      lfo.frequency.setValueAtTime(5.8, now);
+      lfoGain.gain.setValueAtTime(freq * 0.012, now); // vibrato musical proporcional
+      lfo.connect(osc.frequency);
+      lfo.start(now + 0.12);
+      lfo.stop(now + duration);
+
+      osc.connect(bodyFilter);
+      bodyFilter.connect(voiceGain);
+
+      osc.start(now);
+      osc.stop(now + duration + 0.05);
+      oscs.push(osc, lfo);
+
+      // Envelope de arco: fricção inicial gradual (ataque de arco), sustenido caloroso
+      voiceGain.gain.setValueAtTime(0.001, now);
+      voiceGain.gain.linearRampToValueAtTime(0.85 * velocity, now + 0.08);
+      voiceGain.gain.setValueAtTime(0.75 * velocity, now + duration - 0.06);
+      voiceGain.gain.exponentialRampToValueAtTime(0.0001, now + duration + 0.05);
+
+    } else if (this.timbre === 'trumpet') {
+      // Metais: Trompete com bocal acústico e campana
+      // Combinação de dente de serra com onda quadrada com filtro passa-baixas dinâmico (ataque brilhante metálico)
+      const oscSaw = this.ctx.createOscillator();
+      const oscSqr = this.ctx.createOscillator();
+      oscSaw.type = 'sawtooth';
+      oscSqr.type = 'square';
+      oscSaw.frequency.setValueAtTime(freq, now);
+      oscSqr.frequency.setValueAtTime(freq, now);
+
+      const brassFilter = this.ctx.createBiquadFilter();
+      brassFilter.type = 'lowpass';
+      // Brilho inicial no ataque metálico característico da vibração labial
+      brassFilter.frequency.setValueAtTime(4500, now);
+      brassFilter.frequency.exponentialRampToValueAtTime(2200, now + 0.1);
+      brassFilter.Q.setValueAtTime(2.0, now);
+
+      const mixGain = this.ctx.createGain();
+      mixGain.gain.setValueAtTime(0.5, now);
+
+      oscSaw.connect(brassFilter);
+      oscSqr.connect(mixGain);
+      mixGain.connect(brassFilter);
+      brassFilter.connect(voiceGain);
+
+      oscSaw.start(now);
+      oscSqr.start(now);
+      oscSaw.stop(now + duration);
+      oscSqr.stop(now + duration);
+      oscs.push(oscSaw, oscSqr);
+
+      // Envelope de metal: ataque direto e firme
+      voiceGain.gain.setValueAtTime(0.001, now);
+      voiceGain.gain.linearRampToValueAtTime(0.9 * velocity, now + 0.02);
+      voiceGain.gain.setValueAtTime(0.75 * velocity, now + duration - 0.05);
+      voiceGain.gain.exponentialRampToValueAtTime(0.0001, now + duration);
+
+    } else if (this.timbre === 'pure') {
+      // Diapasão padrão 440Hz / Onda Senoidal Pura
+      const osc = this.ctx.createOscillator();
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(freq, now);
+      osc.connect(voiceGain);
+      osc.start(now);
+      osc.stop(now + duration);
+      oscs.push(osc);
+
+      voiceGain.gain.setValueAtTime(0.001, now);
+      voiceGain.gain.linearRampToValueAtTime(0.7 * velocity, now + 0.05);
+      voiceGain.gain.setValueAtTime(0.6 * velocity, now + duration - 0.08);
+      voiceGain.gain.exponentialRampToValueAtTime(0.0001, now + duration);
+
     } else {
-      // Synth
+      // Synth Analógico (sawtooth filtrado)
       const osc = this.ctx.createOscillator();
       osc.type = 'sawtooth';
       osc.frequency.setValueAtTime(freq, now);
@@ -214,6 +347,66 @@ class AudioEngine {
       voiceGain.gain.linearRampToValueAtTime(0.6 * velocity, now + 0.03);
       voiceGain.gain.exponentialRampToValueAtTime(0.0001, now + duration);
     }
+  }
+
+  /**
+   * Continuous tuning drone generator (for vocal & pitch reference training)
+   */
+  public startDrone(freq: number, volumeFactor: number = 0.5) {
+    this.initContext();
+    if (!this.ctx || !this.masterGain) return;
+    this.stopDrone();
+
+    const now = this.ctx.currentTime;
+    const osc = this.ctx.createOscillator();
+    const gain = this.ctx.createGain();
+
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(freq, now);
+
+    gain.gain.setValueAtTime(0.001, now);
+    gain.gain.linearRampToValueAtTime(volumeFactor * this.volume, now + 0.1);
+
+    osc.connect(gain);
+    gain.connect(this.masterGain);
+    osc.start(now);
+
+    this.droneOsc = osc;
+    this.droneGain = gain;
+    this.currentDroneFreq = freq;
+  }
+
+  public stopDrone() {
+    if (this.droneOsc && this.droneGain && this.ctx) {
+      const now = this.ctx.currentTime;
+      this.droneGain.gain.cancelScheduledValues(now);
+      this.droneGain.gain.setValueAtTime(this.droneGain.gain.value, now);
+      this.droneGain.gain.linearRampToValueAtTime(0.0001, now + 0.1);
+      
+      const osc = this.droneOsc;
+      const gain = this.droneGain;
+      setTimeout(() => {
+        try {
+          osc.stop();
+          osc.disconnect();
+          gain.disconnect();
+        } catch {
+          // ignore
+        }
+      }, 120);
+
+      this.droneOsc = null;
+      this.droneGain = null;
+      this.currentDroneFreq = null;
+    }
+  }
+
+  public isDroneActive(): boolean {
+    return this.droneOsc !== null;
+  }
+
+  public getDroneFrequency(): number | null {
+    return this.currentDroneFreq;
   }
 
   /**
@@ -337,12 +530,60 @@ class AudioEngine {
   }
 
   /**
+   * Play a note using an explicit timbre without altering global preferences
+   */
+  public playNoteWithTimbre(note: NoteName, octave: number, overrideTimbre: 'piano' | 'marimba' | 'synth' | 'organ' | 'flute' | 'violin' | 'trumpet' | 'pure', duration: number = 0.9) {
+    const savedTimbre = this.timbre;
+    this.timbre = overrideTimbre;
+    this.playNote(note, octave, duration);
+    // restore after brief timeout so async synthesis uses the right timbre
+    setTimeout(() => {
+      this.timbre = savedTimbre;
+    }, 50);
+  }
+
+  /**
+   * Play a musical scale (ascending and descending or custom)
+   */
+  public playScale(notes: SheetNote[], noteDurationSec: number = 0.45, onStep?: (idx: number) => void, onComplete?: () => void) {
+    notes.forEach((n, idx) => {
+      setTimeout(() => {
+        if (onStep) onStep(idx);
+        this.playNote(n.note, n.octave, noteDurationSec * 0.9);
+      }, idx * noteDurationSec * 1000);
+    });
+
+    if (onComplete) {
+      setTimeout(() => {
+        onComplete();
+      }, notes.length * noteDurationSec * 1000 + 150);
+    }
+  }
+
+  /**
+   * Play a harmonic cadence / chord progression (e.g. I - IV - V - I)
+   */
+  public playCadence(chords: Array<{ name: string; notes: SheetNote[] }>, chordDurationSec: number = 1.3, onStep?: (idx: number) => void, onComplete?: () => void) {
+    chords.forEach((c, idx) => {
+      setTimeout(() => {
+        if (onStep) onStep(idx);
+        this.playChord(c.notes, chordDurationSec * 0.95, true);
+      }, idx * chordDurationSec * 1000);
+    });
+
+    if (onComplete) {
+      setTimeout(() => {
+        onComplete();
+      }, chords.length * chordDurationSec * 1000 + 200);
+    }
+  }
+
+  /**
    * Sound effects for gamification feedback
    */
   public playCorrectSound() {
     this.initContext();
     if (!this.ctx || !this.masterGain) return;
-    const now = this.ctx.currentTime;
     
     // Play an uplifting major triad chime (E5 -> G#5 -> B5)
     [76, 80, 83].forEach((midi, i) => {
