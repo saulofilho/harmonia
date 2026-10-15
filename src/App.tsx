@@ -5,8 +5,9 @@
 import React, { useState, useEffect } from 'react';
 import { UserStats } from './types';
 import { LESSONS } from './data/lessonsData';
-import { Navbar } from './components/Navbar';
+import { Navbar, AppTab } from './components/Navbar';
 import { LessonView } from './components/LessonView';
+import { TheoryEncyclopedia } from './components/TheoryEncyclopedia';
 import { EarTrainingView } from './components/EarTrainingView';
 import { SpeedReaderView } from './components/SpeedReaderView';
 import { MicrophoneView } from './components/MicrophoneView';
@@ -65,7 +66,7 @@ export default function App() {
     return INITIAL_STATS;
   });
 
-  const [currentTab, setCurrentTab] = useState<'lessons' | 'speed' | 'ear' | 'mic' | 'lab'>('lessons');
+  const [currentTab, setCurrentTab] = useState<AppTab>('lessons');
   const [isSettingsOpen, setIsSettingsOpen] = useState<boolean>(false);
   const [isMuted, setIsMuted] = useState<boolean>(false);
 
@@ -188,6 +189,13 @@ export default function App() {
             userStats={userStats}
             onCompleteLesson={handleCompleteLesson}
             onDeductHeart={handleDeductHeart}
+            onNavigateToTheory={() => setCurrentTab('theory')}
+          />
+        )}
+
+        {currentTab === 'theory' && (
+          <TheoryEncyclopedia
+            userStats={userStats}
           />
         )}
 

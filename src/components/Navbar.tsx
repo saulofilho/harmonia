@@ -15,13 +15,16 @@ import {
   Zap, 
   Headphones, 
   Mic, 
-  Compass
+  Compass,
+  GraduationCap
 } from 'lucide-react';
 import { UserStats } from '../types';
 
+export type AppTab = 'lessons' | 'theory' | 'speed' | 'ear' | 'mic' | 'lab';
+
 interface NavbarProps {
-  currentTab: 'lessons' | 'speed' | 'ear' | 'mic' | 'lab';
-  onSelectTab: (tab: 'lessons' | 'speed' | 'ear' | 'mic' | 'lab') => void;
+  currentTab: AppTab;
+  onSelectTab: (tab: AppTab) => void;
   userStats: UserStats;
   onOpenSettings: () => void;
   onToggleMute: () => void;
@@ -37,7 +40,8 @@ export const Navbar: React.FC<NavbarProps> = ({
   isMuted
 }) => {
   const tabs = [
-    { id: 'lessons', label: 'Conservatório', sub: 'Aulas & Teoria', icon: BookOpen },
+    { id: 'lessons', label: 'Conservatório', sub: 'Trilha de Aulas', icon: GraduationCap },
+    { id: 'theory', label: 'Teoria Musical', sub: 'Conceitos & Famílias', icon: BookOpen },
     { id: 'ear', label: 'Percepção', sub: 'Treino Auditivo', icon: Headphones },
     { id: 'speed', label: 'Leitor Veloz', sub: 'Partitura Arcade', icon: Zap },
     { id: 'mic', label: 'Canto & Afinador', sub: 'Voz & Microfone', icon: Mic },

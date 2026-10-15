@@ -33,13 +33,15 @@ interface LessonViewProps {
   userStats: UserStats;
   onCompleteLesson: (lessonId: string, stars: number, xpReward: number) => void;
   onDeductHeart: () => void;
+  onNavigateToTheory?: () => void;
 }
 
 export const LessonView: React.FC<LessonViewProps> = ({
   lessons = [],
   userStats,
   onCompleteLesson,
-  onDeductHeart
+  onDeductHeart,
+  onNavigateToTheory
 }) => {
   const [conservatorySubTab, setConservatorySubTab] = useState<'roadmap' | 'encyclopedia'>('roadmap');
   const [selectedLesson, setSelectedLesson] = useState<Lesson | null>(null);
@@ -178,7 +180,13 @@ export const LessonView: React.FC<LessonViewProps> = ({
 
               <button
                 type="button"
-                onClick={() => setConservatorySubTab('encyclopedia')}
+                onClick={() => {
+                  if (onNavigateToTheory) {
+                    onNavigateToTheory();
+                  } else {
+                    setConservatorySubTab('encyclopedia');
+                  }
+                }}
                 className={`flex-1 sm:flex-initial flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl font-serif text-xs font-bold transition-all cursor-pointer ${
                   conservatorySubTab === 'encyclopedia'
                     ? 'bg-gradient-to-r from-[#d4af37] to-[#b8860b] text-[#12141a] shadow-md shadow-[#d4af37]/20 font-black'
@@ -186,9 +194,9 @@ export const LessonView: React.FC<LessonViewProps> = ({
                 }`}
               >
                 <Sparkles className="w-3.5 h-3.5" />
-                <span>Enciclopédia & Instrumentos</span>
+                <span>Teoria & Instrumentos</span>
                 <span className="px-1.5 py-0.5 rounded-full text-[9px] bg-amber-500/20 text-amber-300 border border-amber-400/30">
-                  Novo
+                  Aba
                 </span>
               </button>
             </div>
